@@ -1,0 +1,30 @@
+# /business reload - необходимо разрешение 'business.reload'
+#
+companies:
+  Taxi:
+    display-name: 'Сервисы Такси' #Имя, которое показывается везде.
+    cost: 80000 #Цена за данный бизнес.
+    income: 1.4 #Доход в секунду.
+
+Misc:
+  Already-have: '&cУ вас уже есть этот бизнес!'
+  Your-income: '&aВаш доход - &6%income% RUB&a/сек.'
+  Successfully-reloaded-config: '&aКонфигурация плагина была перезагружена!'
+  Havent-permission: '&cУ вас нет разрешения на данную команду!'
+  Unknown-business: '&cНеизвестное имя бизнеса!'
+  Havent-money: '&cУ вас нехватает денег!'
+  Successfully-bought: '&aВы купили бизнес &f%business%&a!'
+  Income-is-null: '&cУ вас нет пассивного дохода!'
+  Help-message:
+    - ""
+    - "&e- /business buy <player> <business>"
+    - "&e- /business income"
+    - "&e- /business reload"
+    - ""
+#
+# ДАННЫЕ ИГРОКОВ, НЕ РЕКОМЕНДУЕТСЯ ТРОГАТЬ!
+#
+DataBase:
+
+DataBaseIncome:
+
