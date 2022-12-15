@@ -1,5 +1,14 @@
 # /business reload - необходимо разрешение 'business.reload'
 #
+enable: true
+scoreboard-words-font-attributes: '§7'
+scoreboard-name-font-attributes: '§6§l'
+scoreboard-balance-number-font-attributes: '§e§l'
+scoreboard-balance-unit-font-attributes: '§6§l'
+scoreboard-population-number-font-attributes: '§e§l'
+scoreboard-population-unit-font-attributes: '§6§l'
+scoreboard-income-number-font-attributes: '§e§l'
+scoreboard-income-unit-font-attributes: '§6§l'
 companies:
   Taxi:
     display-name: 'Сервисы Такси' #Имя, которое показывается везде.

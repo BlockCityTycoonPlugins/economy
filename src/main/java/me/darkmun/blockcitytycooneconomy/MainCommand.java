@@ -13,14 +13,14 @@ import org.bukkit.entity.Player;
 
 public class MainCommand implements CommandExecutor {
     static BlockCityTycoonEconomy plugin;
+    DecimalFormat df = new DecimalFormat("##.##");
 
     public MainCommand(BlockCityTycoonEconomy main) {
         plugin = main;
     }
 
     public static String color(String string) {
-        String coloredString = ChatColor.translateAlternateColorCodes('&', string);
-        return coloredString;
+        return ChatColor.translateAlternateColorCodes('&', string);
     }
 
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
@@ -41,7 +41,6 @@ public class MainCommand implements CommandExecutor {
                     Player pl = Bukkit.getPlayerExact(args[1]);
                     if (pl != null) {
                         if (0.0 < plugin.getConfig().getDouble("DataBaseIncome." + args[1] + ".total-income")) {
-                            DecimalFormat df = new DecimalFormat("##.##");
                             sender.sendMessage(color(plugin.getConfig().getString("Misc.Your-income").replace("%income%", String.valueOf(df.format(plugin.getConfig().getDouble("DataBaseIncome." + args[1] + ".total-income"))))));
                             return true;
                         }
@@ -72,9 +71,9 @@ public class MainCommand implements CommandExecutor {
                         if (plugin.getConfig().getConfigurationSection("companies").contains(args[2])) {
                             Player pl = Bukkit.getPlayerExact(args[1]);
                             if (pl != null) {
-                                if (plugin.eco.getBalance(pl) >= plugin.getConfig().getDouble("companies." + args[2] + ".cost")) {
+                                if (BlockCityTycoonEconomy.eco.getBalance(pl) >= plugin.getConfig().getDouble("companies." + args[2] + ".cost")) {
                                     if (!plugin.getConfig().getStringList("DataBase." + args[1]).contains(args[2])) {
-                                        plugin.eco.withdrawPlayer(pl, plugin.getConfig().getDouble("companies." + args[2] + ".cost"));
+                                        BlockCityTycoonEconomy.eco.withdrawPlayer(pl, plugin.getConfig().getDouble("companies." + args[2] + ".cost"));
                                         Double BuyPrice = plugin.getConfig().getDouble("companies." + args[2] + ".cost");
                                         List<String> data = plugin.getConfig().getStringList("DataBase." + args[1]);
                                         data.add(args[2]);
@@ -88,15 +87,15 @@ public class MainCommand implements CommandExecutor {
 
                                         plugin.getConfig().set("DataBaseIncome." + args[1] + ".total-income", realIncome + extraIncome);
                                         plugin.saveConfig();
-                                        sender.sendMessage(color(plugin.getConfig().getString("Misc.Successfully-bought")).replace("%business%", plugin.getConfig().getString("companies." + args[2] + ".display-name")));
+                                        pl.sendMessage(color(plugin.getConfig().getString("Misc.Successfully-bought")).replace("%business%", plugin.getConfig().getString("companies." + args[2] + ".display-name")));
                                         return true;
                                     }
 
-                                    sender.sendMessage(color(plugin.getConfig().getString("Misc.Already-have")));
+                                    pl.sendMessage(color(plugin.getConfig().getString("Misc.Already-have")));
                                     return true;
                                 }
 
-                                sender.sendMessage(color(plugin.getConfig().getString("Misc.Havent-money")));
+                                pl.sendMessage(color(plugin.getConfig().getString("Misc.Havent-money")));
                                 return true;
                             }
                             else {
@@ -128,18 +127,25 @@ public class MainCommand implements CommandExecutor {
                         }
                         else if (args[1].endsWith("%")) {
                             String[] numPercent = args[1].split("%");
-                            int increasePercent = Integer.parseInt(numPercent[0]);
-                            if (increasePercent >= 0) {
-                                double realIncome = plugin.getConfig().getDouble(String.format("DataBaseIncome.%s.real-income", args[0]));
-                                double extraIncome = realIncome / 100d * (double) increasePercent;
-                                plugin.getConfig().set("DataBaseIncome." + args[0] + ".increase-income-percent", increasePercent);
-                                plugin.getConfig().set("DataBaseIncome." + args[0] + ".total-income", realIncome + extraIncome);
-                                plugin.saveConfig();
-                                sender.sendMessage(ChatColor.GREEN + String.format("Для игрока %s был увеличен доход на %d процентов от изначального", args[0], increasePercent));
-                                return true;
+                            try {
+                                int increasePercent = Integer.parseInt(numPercent[0]);
+                                if (increasePercent >= 0) {
+                                    double realIncome = plugin.getConfig().getDouble(String.format("DataBaseIncome.%s.real-income", args[0]));
+                                    double extraIncome = realIncome / 100d * (double) increasePercent;
+                                    plugin.getConfig().set("DataBaseIncome." + args[0] + ".increase-income-percent", increasePercent);
+                                    plugin.getConfig().set("DataBaseIncome." + args[0] + ".total-income", realIncome + extraIncome);
+                                    plugin.saveConfig();
+                                    //sender.sendMessage(ChatColor.GREEN + String.format("Для игрока %s был увеличен доход на %d процентов от изначального", args[0], increasePercent));
+                                    pl.sendMessage(ChatColor.GREEN + String.format("Ваш доход был увеличен на %d процентов от изначального!", increasePercent));
+                                    return true;
+                                }
+                                else {
+                                    sender.sendMessage(ChatColor.RED + "Процент не может быть меньше нуля");
+                                }
                             }
-                            else {
-                                sender.sendMessage(ChatColor.RED + "Процент не может быть меньше нуля");
+                            catch (NumberFormatException ex) {
+                                sender.sendMessage(ChatColor.RED + "Второй аргумент команды введен не верно");
+                                sender.sendMessage(ChatColor.RED + "/increaseincome <player> <percent-num>%");
                             }
                         }
                         else {
