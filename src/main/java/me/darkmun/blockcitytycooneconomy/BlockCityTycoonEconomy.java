@@ -3,6 +3,7 @@ package me.darkmun.blockcitytycooneconomy;
 import net.milkbowl.vault.economy.Economy;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
+import org.bukkit.OfflinePlayer;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.RegisteredServiceProvider;
@@ -18,6 +19,7 @@ public final class BlockCityTycoonEconomy extends JavaPlugin {
     private static BlockCityTycoonEconomy plugin;
     public static Economy eco = null;
     private static Config gemsEconomyConfig = new Config();
+    private static Config playerEventsDataConfig = new Config();
 
     @Override
     public void onEnable() {
@@ -26,12 +28,15 @@ public final class BlockCityTycoonEconomy extends JavaPlugin {
         if (getConfig().getBoolean("enable")) {
             plugin = this;
 
+            playerEventsDataConfig.setup(getServer().getPluginManager().getPlugin("BlockCityTycoonEvents").getDataFolder(), "playerEventsData");
+
             gemsEconomyConfig.setup(Bukkit.getPluginManager().getPlugin("GemsEconomy").getDataFolder(), "data");
             FileConfiguration gemsConfig = gemsEconomyConfig.getConfig();
 
             MainCommand mainCommand = new MainCommand(this);
             this.getCommand("business").setExecutor(mainCommand);
             this.getCommand("increaseincome").setExecutor(mainCommand);
+            this.getCommand("testt").setExecutor(new Test());
 
             getServer().getPluginManager().registerEvents(new CreatingScoreboardOnJoin(), this);
 
@@ -42,13 +47,34 @@ public final class BlockCityTycoonEconomy extends JavaPlugin {
             Bukkit.getScheduler().runTaskTimer(this, () -> {
 
                 for (Player player : Bukkit.getOnlinePlayers()) {
+                    double multiplier = 1;
+                    double income = this.getConfig().getDouble("DataBaseIncome." + player.getName() + ".total-income");
+
                     //Увеличение баланса игрока
                     if (this.getConfig().getDouble("DataBaseIncome." + player.getName() + ".total-income") > 0.0) {
-                        eco.depositPlayer(player, this.getConfig().getDouble("DataBaseIncome." + player.getName() + ".total-income"));
+                        playerEventsDataConfig.reloadConfig();
+                        FileConfiguration config = playerEventsDataConfig.getConfig();
+                        //Bukkit.getLogger().info(String.valueOf(config.getBoolean(player.getUniqueId() + ".rain-event.running")));
+                        if (config.getBoolean(player.getUniqueId() + ".night-event.running")) {
+                            multiplier = 0;
+                            //Bukkit.getLogger().info("Multiplier (night): ");
+                        } else {
+                            if (config.getBoolean(player.getUniqueId() + ".economic-growth-event.running")) {
+                                multiplier = 2;
+                                //Bukkit.getLogger().info("Multiplier (economic growth): ");
+                            }
+                            if (config.getBoolean(player.getUniqueId() + ".rain-event.running")) {
+                                multiplier = 0.5;
+                                //Bukkit.getLogger().info("Multiplier (rain): ");
+                            }
+                        }
+                        income *= multiplier;
+                        eco.depositPlayer(player, income);
                     }
-
+                    //Bukkit.getLogger().info("Income: " + income);
                     //Изменение скорборда игрока
                     Scoreboard scoreboard = player.getScoreboard();
+                    //int teamNum = CreatingScoreboardOnJoin.getTeamNumber(player.getUniqueId());
 
                     String balanceNumberFont = getConfig().getString("scoreboard-balance-number-font-attributes");
                     String balanceUnitFont = getConfig().getString("scoreboard-balance-unit-font-attributes");
@@ -60,6 +86,8 @@ public final class BlockCityTycoonEconomy extends JavaPlugin {
 
                     //Баланс
                     String newBalance = wordsFont + "Баланс: " + balanceNumberFont + formatNumber(eco.getBalance(player)) + balanceUnitFont + " $";
+
+                    Bukkit.getLogger().info("balance");
                     //String oldBalance = scoreboard.getTeam("balance").getPrefix() + scoreboard.getTeam("balance").getSuffix();
                     scoreboard.getTeam("balance").setPrefix(newBalance.substring(0, 16));
                     scoreboard.getTeam("balance").setSuffix(balanceNumberFont + newBalance.substring(16));
@@ -79,7 +107,7 @@ public final class BlockCityTycoonEconomy extends JavaPlugin {
                     }
 
                     //Доход
-                    String newIncome = wordsFont + "Доход: " + incomeNumberFont + formatNumber(getConfig().getDouble("DataBaseIncome." + player.getName() + ".total-income")) + incomeUnitFont + " $/с";
+                    String newIncome = wordsFont + "Доход: " + incomeNumberFont + formatNumber(income) + incomeUnitFont + " $/с";
                     String newIncomePrefix = newIncome.substring(0, 16);
                     String newIncomeSuffix = incomeNumberFont + newIncome.substring(16);
                     String oldIncome = scoreboard.getTeam("income").getPrefix() + scoreboard.getTeam("income").getSuffix();
@@ -92,6 +120,8 @@ public final class BlockCityTycoonEconomy extends JavaPlugin {
                             scoreboard.getTeam("income").setSuffix(incomeNumberFont + "0" + incomeUnitFont + " $/сек");
                         }
                     }
+
+                    //player.setScoreboard(scoreboard);
                 }
 
             }, 0L, 20L);

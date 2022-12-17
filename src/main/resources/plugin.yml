@@ -8,3 +8,5 @@ commands:
     description: Главная команда плагина.
   increaseincome:
     description: Увеличивает доход указанному игроку на заданное количество процентов.
+  testt:
+    description: asd
