@@ -15,7 +15,8 @@ public class Config {
         file = new File(configFolder, configName + ".yml");
         if (!file.exists()) {
             try {
-                file.createNewFile();
+                @SuppressWarnings("unused")
+                boolean created = file.createNewFile();
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
@@ -28,6 +29,7 @@ public class Config {
         return config;
     }
 
+    @SuppressWarnings("unused")
     public void saveConfig() {
         try {
             config.save(file);

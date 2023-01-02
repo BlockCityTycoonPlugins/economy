@@ -53,13 +53,13 @@ public class MainCommand implements CommandExecutor {
                     }
                 }
 
-                Iterator var5;
+                Iterator<String> var5;
                 String msg;
                 if (args.length == 0) {
                     var5 = plugin.getConfig().getStringList("Misc.Help-message").iterator();
 
                     while(var5.hasNext()) {
-                        msg = (String)var5.next();
+                        msg = var5.next();
                         sender.sendMessage(ChatColor.translateAlternateColorCodes('&', msg));
                     }
 
@@ -74,7 +74,6 @@ public class MainCommand implements CommandExecutor {
                                 if (BlockCityTycoonEconomy.eco.getBalance(pl) >= plugin.getConfig().getDouble("companies." + args[2] + ".cost")) {
                                     if (!plugin.getConfig().getStringList("DataBase." + args[1]).contains(args[2])) {
                                         BlockCityTycoonEconomy.eco.withdrawPlayer(pl, plugin.getConfig().getDouble("companies." + args[2] + ".cost"));
-                                        Double BuyPrice = plugin.getConfig().getDouble("companies." + args[2] + ".cost");
                                         List<String> data = plugin.getConfig().getStringList("DataBase." + args[1]);
                                         data.add(args[2]);
                                         plugin.getConfig().set("DataBase." + args[1], data);
@@ -110,7 +109,7 @@ public class MainCommand implements CommandExecutor {
                     var5 = plugin.getConfig().getStringList("Misc.Help-message").iterator();
 
                     while(var5.hasNext()) {
-                        msg = (String)var5.next();
+                        msg = var5.next();
                         sender.sendMessage(ChatColor.translateAlternateColorCodes('&', msg));
                     }
 

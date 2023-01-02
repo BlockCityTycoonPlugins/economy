@@ -2,26 +2,21 @@ package me.darkmun.blockcitytycooneconomy;
 
 import net.milkbowl.vault.economy.Economy;
 import org.bukkit.Bukkit;
-import org.bukkit.ChatColor;
-import org.bukkit.OfflinePlayer;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.RegisteredServiceProvider;
 import org.bukkit.plugin.java.JavaPlugin;
-import org.bukkit.scoreboard.Objective;
 import org.bukkit.scoreboard.Scoreboard;
-import org.bukkit.scoreboard.Team;
 
 import java.text.DecimalFormat;
-import java.util.Arrays;
 
 public final class BlockCityTycoonEconomy extends JavaPlugin {
     private static BlockCityTycoonEconomy plugin;
     public static Economy eco = null;
-    private static Config gemsEconomyConfig = new Config();
-    private static Config playerEventsDataConfig = new Config();
+    private static final Config gemsEconomyConfig = new Config();
+    private static final Config playerEventsDataConfig = new Config();
 
-    @Override
+    @Override @SuppressWarnings("unused")
     public void onEnable() {
         this.saveDefaultConfig();
 
@@ -31,12 +26,11 @@ public final class BlockCityTycoonEconomy extends JavaPlugin {
             playerEventsDataConfig.setup(getServer().getPluginManager().getPlugin("BlockCityTycoonEvents").getDataFolder(), "playerEventsData");
 
             gemsEconomyConfig.setup(Bukkit.getPluginManager().getPlugin("GemsEconomy").getDataFolder(), "data");
-            FileConfiguration gemsConfig = gemsEconomyConfig.getConfig();
+            //FileConfiguration gemsConfig = gemsEconomyConfig.getConfig();
 
             MainCommand mainCommand = new MainCommand(this);
             this.getCommand("business").setExecutor(mainCommand);
             this.getCommand("increaseincome").setExecutor(mainCommand);
-            this.getCommand("testt").setExecutor(new Test());
 
             getServer().getPluginManager().registerEvents(new CreatingScoreboardOnJoin(), this);
 
@@ -45,7 +39,7 @@ public final class BlockCityTycoonEconomy extends JavaPlugin {
                 this.getServer().getPluginManager().disablePlugin(this);
             }
             Bukkit.getScheduler().runTaskTimer(this, () -> {
-
+                gemsEconomyConfig.reloadConfig();
                 for (Player player : Bukkit.getOnlinePlayers()) {
                     double multiplier = 1;
                     double income = this.getConfig().getDouble("DataBaseIncome." + player.getName() + ".total-income");
@@ -54,27 +48,22 @@ public final class BlockCityTycoonEconomy extends JavaPlugin {
                     if (this.getConfig().getDouble("DataBaseIncome." + player.getName() + ".total-income") > 0.0) {
                         playerEventsDataConfig.reloadConfig();
                         FileConfiguration config = playerEventsDataConfig.getConfig();
-                        //Bukkit.getLogger().info(String.valueOf(config.getBoolean(player.getUniqueId() + ".rain-event.running")));
                         if (config.getBoolean(player.getUniqueId() + ".night-event.running")) {
                             multiplier = 0;
-                            //Bukkit.getLogger().info("Multiplier (night): ");
                         } else {
                             if (config.getBoolean(player.getUniqueId() + ".economic-growth-event.running")) {
-                                multiplier = 2;
-                                //Bukkit.getLogger().info("Multiplier (economic growth): ");
+                                multiplier *= 2;
                             }
                             if (config.getBoolean(player.getUniqueId() + ".rain-event.running")) {
-                                multiplier = 0.5;
-                                //Bukkit.getLogger().info("Multiplier (rain): ");
+                                multiplier *= 0.5;
                             }
                         }
                         income *= multiplier;
                         eco.depositPlayer(player, income);
                     }
-                    //Bukkit.getLogger().info("Income: " + income);
+
                     //Изменение скорборда игрока
                     Scoreboard scoreboard = player.getScoreboard();
-                    //int teamNum = CreatingScoreboardOnJoin.getTeamNumber(player.getUniqueId());
 
                     String balanceNumberFont = getConfig().getString("scoreboard-balance-number-font-attributes");
                     String balanceUnitFont = getConfig().getString("scoreboard-balance-unit-font-attributes");
@@ -86,19 +75,13 @@ public final class BlockCityTycoonEconomy extends JavaPlugin {
 
                     //Баланс
                     String newBalance = wordsFont + "Баланс: " + balanceNumberFont + formatNumber(eco.getBalance(player)) + balanceUnitFont + " $";
-
-                    Bukkit.getLogger().info("balance");
-                    //String oldBalance = scoreboard.getTeam("balance").getPrefix() + scoreboard.getTeam("balance").getSuffix();
                     scoreboard.getTeam("balance").setPrefix(newBalance.substring(0, 16));
                     scoreboard.getTeam("balance").setSuffix(balanceNumberFont + newBalance.substring(16));
 
                     //Численность
-                    //String newPopulation = "Численность: " + numberFont + formatNumber(gemsConfig.getDouble("accounts." + player.getUniqueId().toString() + ".balances.e2d28c59-70e6-4fa3-ac58-2018569c08a8"));
-                    //String newPopulationPrefix = newPopulation.substring(0, 16)
-                    //String oldPopulation =
-                    String newPopulationSuffix = populationNumberFont + formatNumber(gemsConfig.getDouble("accounts." + player.getUniqueId().toString() + ".balances.e2d28c59-70e6-4fa3-ac58-2018569c08a8"));
+                    String newPopulationSuffix = populationNumberFont + formatNumber(gemsEconomyConfig.getConfig().getDouble("accounts." + player.getUniqueId().toString() + ".balances.e2d28c59-70e6-4fa3-ac58-2018569c08a8"));
                     if (!scoreboard.getTeam("population").getSuffix().equals(newPopulationSuffix)) {
-                        if (gemsConfig.contains("accounts." + player.getUniqueId().toString() + ".balances.e2d28c59-70e6-4fa3-ac58-2018569c08a8")) {
+                        if (gemsEconomyConfig.getConfig().contains("accounts." + player.getUniqueId().toString() + ".balances.e2d28c59-70e6-4fa3-ac58-2018569c08a8")) {
                             scoreboard.getTeam("population").setSuffix(newPopulationSuffix);
                         }
                         else {
@@ -132,23 +115,8 @@ public final class BlockCityTycoonEconomy extends JavaPlugin {
         }
     }
 
-    /*private String formatNumber(double num) {
-        String[] units = new String[] {"тыс.", "млн.", "млрд.", "трлн.", "квдрлн.", "квнтлн.", "скстлн."};
-        DecimalFormat df = new DecimalFormat("#.000");
-        String result = df.format(num);
-        double curNum = num;
-
-        int i = 0;
-        while (curNum/1000d >= 1) {
-            curNum = curNum/1000d;
-            result = df.format(curNum) + units[i];
-            i++;
-        }
-        return result;
-    }*/
-
     private String formatNumber(double num) {
-        String[] units = new String[] {"тыс.", "млн.", "млрд.", "трлн.", "квдрлн.", "квнтлн.", "скстлн."};
+        String[] units = new String[] {"тыс.", "млн.", "млрд.", "трлн.", "квдр.", "квнт.", "скст."};
         /*String format = "#";
         if (numbersAfterComma > 0) {
             format += ".";
@@ -158,7 +126,7 @@ public final class BlockCityTycoonEconomy extends JavaPlugin {
         }*/
         String result;
         DecimalFormat df;
-        df = new DecimalFormat("#.###");
+        df = new DecimalFormat("#.##");
 
         //String number = df.format(num);
         //String unit = "";
@@ -175,34 +143,6 @@ public final class BlockCityTycoonEconomy extends JavaPlugin {
         }
         return result;
     }
-
-    /*private String formatNumber(int num) {
-        String[] units = new String[] {"тыс.", "млн.", "млрд.", "трлн.", "квдрлн.", "квнтлн.", "скстлн."};
-        String result;
-        //String format = "#";
-        //if (numbersAfterComma > 0) {
-        //    format += ".";
-        //    for (int i = 0; i < numbersAfterComma; i++) {
-        //        format += "0";
-         //   }
-        //}
-        DecimalFormat df = new DecimalFormat("#.###");
-
-        //String number = df.format(num);
-        //String unit = "";
-        result = df.format(num);
-        double curNum = num;
-
-        int i = 0;
-        while (curNum/1000d >= 1) {
-            curNum = curNum/1000d;
-            //number = df.format(curNum);
-            //unit = units[i];
-            result = df.format(curNum) + units[i];
-            i++;
-        }
-        return result;
-    }*/
 
     @Override
     public void onDisable() {
@@ -217,7 +157,7 @@ public final class BlockCityTycoonEconomy extends JavaPlugin {
             if (rsp == null) {
                 return false;
             } else {
-                eco = (Economy)rsp.getProvider();
+                eco = rsp.getProvider();
                 return eco != null;
             }
         }
