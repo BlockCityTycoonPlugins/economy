@@ -2,24 +2,26 @@ package me.darkmun.blockcitytycooneconomy;
 
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
-import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.scoreboard.*;
 
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.text.DecimalFormat;
 import java.util.*;
 
 public class CreatingScoreboardOnJoin implements Listener {
 
     //Map<UUID, Scoreboard> playerScoreboards = new HashMap<>();
-    private final FileConfiguration gemsConfig = BlockCityTycoonEconomy.getGemsEconomyConfig().getConfig();
     private Set<Team> citizensTeams = null;
 
     @EventHandler @SuppressWarnings("unused")
-    public void onJoin(PlayerJoinEvent event) {
+    public void onJoin(PlayerJoinEvent event) throws SQLException {
         Player pl = event.getPlayer();
         UUID plUID = pl.getUniqueId();
 
@@ -55,16 +57,27 @@ public class CreatingScoreboardOnJoin implements Listener {
         if (scoreboard.getTeam("population") == null) {
             Team population = scoreboard.registerNewTeam("population");
             population.addEntry(ChatColor.AQUA.toString());
-            if (gemsConfig.contains("accounts." + pl.getUniqueId().toString() + ".balances.e2d28c59-70e6-4fa3-ac58-2018569c08a8")) {
+
+            Connection con = BlockCityTycoonEconomy.getPopulationDatabase().getConnection();
+            PreparedStatement statement = con.prepareStatement("SELECT * FROM gemseconomy_accounts WHERE uuid=?");
+            statement.setString(1, plUID.toString());
+            ResultSet rs = statement.executeQuery();
+            if (rs.next() && !rs.getString("balance_data").equals("{}")) {
+                String balanceData = rs.getString("balance_data");
+                String[] balanceDataStrings = balanceData.split(":");
+                double populationNumber = Double.parseDouble(balanceDataStrings[1].substring(0, balanceDataStrings[1].length() - 1));
                 //String str = "Численность: " + numberFont + formatNumber(gemsConfig.getDouble("accounts." + pl.getUniqueId().toString() + ".balances.e2d28c59-70e6-4fa3-ac58-2018569c08a8"), 0) + unitFont + " чел.";
                 population.setPrefix(wordsFont + "Численность: ");
-                population.setSuffix(populationNumberFont + formatNumber(gemsConfig.getDouble("accounts." + pl.getUniqueId().toString() + ".balances.e2d28c59-70e6-4fa3-ac58-2018569c08a8")));
+                //population.setSuffix(populationNumberFont + formatNumber(gemsConfig.getDouble("accounts." + pl.getUniqueId().toString() + ".balances.e2d28c59-70e6-4fa3-ac58-2018569c08a8")));
+                population.setSuffix(populationNumberFont + formatNumber(populationNumber));
             }
             else {
                 population.setPrefix(wordsFont + "Численность: ");
                 population.setSuffix(populationNumberFont + "0"/* + unitFont + " чел."*/);
             }
             objective.getScore(ChatColor.AQUA.toString()).setScore(3);
+            rs.close();
+            statement.close();
         }
 
 
@@ -99,27 +112,16 @@ public class CreatingScoreboardOnJoin implements Listener {
 
     private String formatNumber(double num) {
         String[] units = new String[] {"тыс.", "млн.", "млрд.", "трлн.", "квдр.", "квнт.", "скст."};
-        /*String format = "#";
-        if (numbersAfterComma > 0) {
-            format += ".";
-            for (int i = 0; i < numbersAfterComma; i++) {
-                format += "0";
-            }
-        }*/
-        DecimalFormat df = new DecimalFormat("#.##");
+        String result;
+        DecimalFormat df;
+        df = new DecimalFormat("#.##");
 
-        //String number = df.format(num);
-        //String unit = "";
-        String result = df.format(num);
+        result = df.format(num);
         double curNum = num;
 
-        int i = 0;
-        while (curNum/1000d >= 1) {
+        for (int i = 0; curNum/1000d >= 1; i++) {
             curNum = curNum/1000d;
-            //number = df.format(curNum);
-            //unit = units[i];
             result = df.format(curNum) + units[i];
-            i++;
         }
         return result;
     }

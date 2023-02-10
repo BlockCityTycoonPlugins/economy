@@ -1,9 +1,10 @@
-package me.darkmun.blockcitytycooneconomy;
+package me.darkmun.blockcitytycooneconomy.commands;
 
 import java.text.DecimalFormat;
 import java.util.Iterator;
 import java.util.List;
 
+import me.darkmun.blockcitytycooneconomy.BlockCityTycoonEconomy;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.command.Command;
@@ -25,18 +26,21 @@ public class MainCommand implements CommandExecutor {
 
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
         if (sender.hasPermission("bcteconomy.commands")) {
-            if (label.equalsIgnoreCase("business")) {
-                if (args.length > 0 && args[0].equalsIgnoreCase("reload")) {
-                    if (sender.hasPermission("business.reload")) {
-                        sender.sendMessage(color(plugin.getConfig().getString("Misc.Successfully-reloaded-config")));
-                        plugin.reloadConfig();
-                        return true;
-                    }
-
-                    sender.sendMessage(color(plugin.getConfig().getString("Misc.Havent-permission")));
-                    return true;
+            if (label.equalsIgnoreCase("bcteconomy")) {
+                if (args.length != 1) {
+                    sender.sendMessage(ChatColor.RED + "Команда предназначена для перезагрузки конфигов, поэтому может быть только один аргумент");
+                    sender.sendMessage(ChatColor.GOLD + "Использование: /bcteconomy reload");
+                } else if (!args[0].equals("reload")) {
+                    sender.sendMessage(ChatColor.GOLD + "Использование: /bcteconomy reload");
+                } else {
+                    Bukkit.getLogger().info("§eПерезагрузка основного конфига...");
+                    BlockCityTycoonEconomy.getPlugin().reloadConfig();
+                    Bukkit.getLogger().info("§aПерезагрузка §6BCTEconomy §aзавершена.");
                 }
+                return true;
+            }
 
+            if (label.equalsIgnoreCase("business")) {
                 if (args.length > 1 && args[0].equalsIgnoreCase("income")) {
                     Player pl = Bukkit.getPlayerExact(args[1]);
                     if (pl != null) {
@@ -86,20 +90,17 @@ public class MainCommand implements CommandExecutor {
 
                                         plugin.getConfig().set("DataBaseIncome." + args[1] + ".total-income", realIncome + extraIncome);
                                         plugin.saveConfig();
-                                        pl.sendMessage(color(plugin.getConfig().getString("Misc.Successfully-bought")).replace("%business%", plugin.getConfig().getString("companies." + args[2] + ".display-name")));
                                         return true;
                                     }
-
-                                    pl.sendMessage(color(plugin.getConfig().getString("Misc.Already-have")));
                                     return true;
                                 }
 
                                 pl.sendMessage(color(plugin.getConfig().getString("Misc.Havent-money")));
-                                return true;
                             }
                             else {
                                 sender.sendMessage("Игрока с таким ником сейчас нет на сервере");
                             }
+                            return true;
                         }
 
                         sender.sendMessage(color(plugin.getConfig().getString("Misc.Unknown-business")));

@@ -4,6 +4,8 @@ main: me.darkmun.blockcitytycooneconomy.BlockCityTycoonEconomy
 authors: [ Darkmun ]
 depend: [ Vault ]
 commands:
+  bcteconomy:
+    description: Для перезагрузки конфигов
   business:
     description: Главная команда плагина.
   increaseincome:
