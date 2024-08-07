@@ -91,7 +91,7 @@ public final class BlockCityTycoonEconomy extends JavaPlugin {
                         PreparedStatement statement = con.prepareStatement("SELECT * FROM gemseconomy_accounts WHERE uuid=?");
                         statement.setString(1, player.getUniqueId().toString());
                         ResultSet rs = statement.executeQuery();
-                        if (rs.next() && !rs.getString("balance_data").equals("{}")) {
+                        if (rs.next() && !rs.getString("balance_data").equals("{}") && !rs.getString("balance_data").endsWith(":0.0}")) {
                             String balanceData = rs.getString("balance_data");
                             String[] balanceDataStrings = balanceData.split(":");
                             double populationNumber = Double.parseDouble(balanceDataStrings[1].substring(0, balanceDataStrings[1].length() - 1));

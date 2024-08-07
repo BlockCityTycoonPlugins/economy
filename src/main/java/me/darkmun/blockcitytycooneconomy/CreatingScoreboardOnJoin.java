@@ -41,7 +41,12 @@ public class CreatingScoreboardOnJoin implements Listener {
                 copyTeamsToScoreboard(citizensTeams, scoreboard);
             }, 300);
         } else {
-            copyTeamsToScoreboard(citizensTeams, scoreboard);
+            try {
+                copyTeamsToScoreboard(citizensTeams, scoreboard);
+            } catch (IllegalStateException ex) {
+                citizensTeams = Bukkit.getScoreboardManager().getMainScoreboard().getTeams();
+                copyTeamsToScoreboard(citizensTeams, scoreboard);
+            }
         }
 
         String wordsFont = BlockCityTycoonEconomy.getPlugin().getConfig().getString("scoreboard-words-font-attributes");
@@ -62,7 +67,7 @@ public class CreatingScoreboardOnJoin implements Listener {
             PreparedStatement statement = con.prepareStatement("SELECT * FROM gemseconomy_accounts WHERE uuid=?");
             statement.setString(1, plUID.toString());
             ResultSet rs = statement.executeQuery();
-            if (rs.next() && !rs.getString("balance_data").equals("{}")) {
+            if (rs.next() && !rs.getString("balance_data").equals("{}") && !rs.getString("balance_data").endsWith(":0.0}")) {
                 String balanceData = rs.getString("balance_data");
                 String[] balanceDataStrings = balanceData.split(":");
                 double populationNumber = Double.parseDouble(balanceDataStrings[1].substring(0, balanceDataStrings[1].length() - 1));
